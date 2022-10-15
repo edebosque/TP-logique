@@ -1,0 +1,51 @@
+class DPLL:
+    def __init__(self, problem, nb_literraux):
+        self.problem = problem
+        self.nb_literraux = nb_literraux
+        self.n = len(problem)
+        self.etat_clauses = [0 for i in range(self.n)]
+        self.long_clauses = [len(self.problem[i]) for i in range(self.n)]
+        self.etat_variables = [0 for i in range(self.nb_literraux+1)]
+        self.pile = []
+        self.literraux_clauses = [[] for i in range(self.nb_literraux+1)]
+        for i in range(self.n):
+            for j in self.problem[i]:
+                self.literraux_clauses[j].append(i)
+
+    def if_mono_lit(self, clause):
+        p = self.problem[clause][0]
+        if p % 2 == 1:
+            self.etat_clauses[clause] = p      # La clause i devient vrai par rapport à j
+            for j in self.literraux_clauses[p+1]:
+                self.long_clauses[j] -= 1     # On enleve les p barre dans les autres clauses
+            self.etat_variables[p], self.etat_variables[p+1] = 1,1      # On dit que p et p barre sont affectées 
+            self.pile.append([p,1])
+            self.pile.append([p+1,0])        #On dit qu'on a affecté Faux au littéral i+1
+            for j in self.literraux_clauses[p]:
+                self.etat_clauses[j] = p      # On met vrai toutes les clauses qui contiennent p
+        else :
+            self.etat_variables[p], self.etat_variables[p-1] = 1,1      # On dit qu'on a affecté une valeur a p barre et p
+            self.pile.append([p, 1])     # p barre devient vraie
+            self.pile.append([p-1, 0])       # p devient faux
+            for j in self.literraux_clauses[p-1]:     
+                self.long_clauses[j]-=1       # On enleve une longueur la où y'a des p
+            self.etat_clauses[clause] = p      # La clause i est vrai par rapport au littéral p
+            for j in self.literraux_clauses[p]:
+                self.etat_clauses[j] = p  # On met vrai toutes les clauses qui contiennent p barre
+    
+    def search_mono_lit(self):
+        for i in range(self.n):
+            if self.long_clauses[i] == 1 and self.etat_clauses[i] == 0:
+                return i
+        return -1
+
+    def elimine_mono_lit(self):
+        clause = self.search_mono_lit()
+        while clause != -1 :
+            self.if_mono_lit(clause)
+            clause = self.search_mono_lit()
+
+    
+
+F = [[1,5], [3,5,1], [6], [6,1], [2,4,6]]
+test = DPLL(F, 6)
